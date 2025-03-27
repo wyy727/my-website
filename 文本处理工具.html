@@ -363,22 +363,41 @@
             const copyBtn = document.querySelector('button[onclick="copyResult()"]');
             const originalText = copyBtn.innerHTML;
             
-            navigator.clipboard.writeText(output.value)
-                .then(() => {
+            // 创建临时textarea元素
+            const textarea = document.createElement('textarea');
+            textarea.value = output.value;
+            textarea.style.position = 'fixed';  // 防止页面滚动
+            textarea.style.opacity = '0';       // 隐藏元素
+            document.body.appendChild(textarea);
+            
+            try {
+                // 选择文本
+                textarea.select();
+                textarea.setSelectionRange(0, textarea.value.length);
+                
+                // 执行复制命令
+                const successful = document.execCommand('copy');
+                
+                if (successful) {
                     copyBtn.classList.add('btn-copied');
                     copyBtn.innerHTML = '📋 已复制';
                     setTimeout(() => {
                         copyBtn.classList.remove('btn-copied');
                         copyBtn.innerHTML = originalText;
                     }, 5000);
-                })
-                .catch(err => {
-                    console.error('复制失败:', err);
-                    copyBtn.innerHTML = '⚠️ 复制失败';
-                    setTimeout(() => {
-                        copyBtn.innerHTML = originalText;
-                    }, 2000);
-                });
+                } else {
+                    throw new Error('复制命令执行失败');
+                }
+            } catch (err) {
+                console.error('复制失败:', err);
+                copyBtn.innerHTML = '⚠️ 复制失败';
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                }, 2000);
+            } finally {
+                // 清理临时元素
+                document.body.removeChild(textarea);
+            }
         }
     </script>
 </body>
