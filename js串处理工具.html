@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>AiDoc.work - JSON解析工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            min-height: 100vh;
+            color: #4a5568;
+        }
+
+        /* 导航栏样式 */
+        .nav-bar {
+            background: white;
+            padding: 15px 25px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #1a73e8;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-link {
+            color: #4a5568;
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-link:hover {
+            background: #f0f2f5;
+            color: #1a73e8;
+        }
+
+        .nav-link.active {
+            background: #e8f0fe;
+            color: #1a73e8;
+        }
+
+        .main-content {
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: calc(100vh - 70px);
+        }
+
+        .container {
+            max-width: 1600px;
+            width: 98%;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            min-height: calc(100vh - 140px);
+            display: flex;
+            gap: 20px;
+            position: relative;
+            margin: 1rem auto;
+        }
+
+        .input-section {
+            flex: 0.8;
+            min-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            position: sticky;
+            top: 25px;
+            height: fit-content;
+        }
+
+        h2 {
+            color: #1a73e8;
+            margin-bottom: 1.5rem;
+            font-size: 1.8em;
+            text-align: center;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 2px solid #1a73e8;
+            border-radius: 8px;
+            resize: none;
+            font-size: 14px;
+            line-height: 1.6;
+            background: #f8f9ff;
+            transition: all 0.3s ease;
+            color: #4a5568;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 1px rgba(26, 115, 232, 0.2);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            position: relative;
+            background: linear-gradient(135deg, #72f2ff 0%, #9b6dff 50%, #ff6b6b 100%);
+            background-size: 200% auto;
+            color: white;
+            text-shadow: 0 0 8px rgba(255,255,255,0.3);
+            box-shadow: 0 0 20px rgba(114, 242, 255, 0.5);
+            animation: gradientFlow 15s linear infinite;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .toggle-values-btn {
+            background: linear-gradient(135deg, #72f2ff 0%, #9b6dff 50%, #ff6b6b 100%);
+            background-size: 200% auto;
+            color: white;
+            text-shadow: 0 0 8px rgba(255,255,255,0.3);
+            box-shadow: 0 0 20px rgba(114, 242, 255, 0.5);
+            animation: gradientFlow 15s linear infinite;
+        }
+
+        .toggle-values-btn.hide-values {
+            background: #A0C49D;
+            box-shadow: 0 0 12px rgba(52, 168, 83, 0.3);
+            animation: none;
+        }
+
+        .toggle-values-btn.hide-values:hover {
+            opacity: 0.9;
+        }
+
+        .output-section {
+            flex: 1.2;
+            min-width: 800px;
+            padding: 20px;
+            overflow: auto;
+            height: calc(100vh - 190px);
+            position: sticky;
+            top: 25px;
+            scroll-behavior: smooth;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .tree-node {
+            margin-left: 15px;
+            border-left: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .node-header {
+            padding: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            transition: all 0.2s ease;
+            position: relative;
+            border-radius: 4px;
+            margin: 1px 0;
+            font-size: 13px;
+            background: white;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .node-header:hover {
+            background: #f0f2f5;
+        }
+
+        .toggle-icon {
+            width: 18px;
+            text-align: center;
+            margin-right: 6px;
+            transition: transform 0.3s;
+            color: #1a73e8;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .key-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            flex-wrap: wrap;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .key-text {
+            white-space: normal;
+            word-break: break-all;
+            color: #1a73e8;  /* 默认变量名颜色 */
+            font-weight: normal;
+            font-size: 13px;
+        }
+
+        .type-tag {
+            color: #4ec9b0;  /* 类型标签颜色 */
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+
+        .value-text {
+            color: #0D47A1;  /* 深蓝色 - 更专业的配色 */
+            font-size: 0.9em;
+            font-family: 'Consolas', 'Monaco', monospace;
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: normal;
+            word-break: break-all;
+            flex: 1;
+            min-width: 0;
+            background: #E3F2FD;  /* 浅蓝色背景 */
+            border: 1px solid #BBDEFB;  /* 浅蓝色边框 */
+        }
+
+        .value-text.hidden {
+            display: none;
+        }
+
+        .copy-icon {
+            opacity: 0;
+            font-size: 1em;
+            color: #4CAF50;  /* 使用绿色 */
+            transition: all 0.2s ease;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #E8F5E9;  /* 浅绿色背景 */
+            flex-shrink: 0;
+            margin-left: 8px;
+            border: 1px solid #C8E6C9;  /* 浅绿色边框 */
+        }
+
+        .node-header:hover .copy-icon {
+            opacity: 1;
+        }
+
+        .copy-icon:hover {
+            color: #2E7D32;  /* 深绿色 */
+            background: #C8E6C9;  /* 更深的浅绿色 */
+            transform: scale(1.05);
+        }
+
+        .copy-success {
+            color: #ffffff;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            background: #4CAF50;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            animation: fadeInRight 0.3s ease;
+            position: absolute;
+            margin-left: 4px;
+            box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+        }
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes fadeInRight {
+            from { 
+                opacity: 0; 
+                transform: translateX(-10px);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateX(0);
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                flex-direction: column;
+                padding: 20px;
+            }
+
+            .input-section, .output-section {
+                width: 100%;
+                min-width: unset;
+                position: relative;
+                top: 0;
+            }
+
+            .output-section {
+                height: auto;
+                max-height: calc(100vh - 400px);
+            }
+        }
+
+        /* 不同深度的字段使用不同的颜色和样式 */
+        .depth-0 .key-text { 
+            color: #1a73e8;  /* 根级别 - 蓝色 */
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .depth-1 .key-text { 
+            color: #2e7d32;  /* 第一层 - 深绿色 */
+            font-weight: 500;
+            font-size: 15px;
+            font-style: italic;
+        }
+        .depth-2 .key-text { 
+            color: #d32f2f;  /* 第二层 - 红色 */
+            font-weight: 500;
+            font-size: 14px;
+            text-decoration: underline;
+        }
+        .depth-3 .key-text { 
+            color: #7b1fa2;  /* 第三层 - 紫色 */
+            font-weight: 500;
+            font-size: 13.5px;
+            letter-spacing: 0.5px;
+        }
+        .depth-4 .key-text { 
+            color: #1976d2;  /* 第四层 - 浅蓝色 */
+            font-weight: 500;
+            font-size: 13px;
+            text-transform: capitalize;
+        }
+        .depth-5 .key-text { 
+            color: #388e3c;  /* 第五层 - 绿色 */
+            font-weight: 500;
+            font-size: 12.5px;
+            font-style: italic;
+            text-decoration: underline;
+        }
+        .depth-6 .key-text { 
+            color: #f44336;  /* 第六层 - 亮红色 */
+            font-weight: 500;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            text-transform: capitalize;
+        }
+        .depth-7 .key-text { 
+            color: #9c27b0;  /* 第七层 - 亮紫色 */
+            font-weight: 500;
+            font-size: 11.5px;
+            font-style: italic;
+            letter-spacing: 0.5px;
+        }
+        .depth-8 .key-text { 
+            color: #4a5568;  /* 第八层及以下 - 深灰色 */
+            font-weight: normal;
+            font-size: 11px;
+            text-decoration: underline;
+            letter-spacing: 0.5px;
+        }
+
+        /* 相应调整值的字体大小 */
+        .depth-0 .value-text { font-size: 15px; }
+        .depth-1 .value-text { font-size: 14px; }
+        .depth-2 .value-text { font-size: 13px; }
+        .depth-3 .value-text { font-size: 12.5px; }
+        .depth-4 .value-text { font-size: 12px; }
+        .depth-5 .value-text { font-size: 11.5px; }
+        .depth-6 .value-text { font-size: 11px; }
+        .depth-7 .value-text { font-size: 10.5px; }
+        .depth-8 .value-text { font-size: 10px; }
+
+        /* 添加滚动条样式 */
+        .output-section::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .output-section::-webkit-scrollbar-track {
+            background: #f0f2f5;
+            border-radius: 4px;
+        }
+
+        .output-section::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 4px;
+        }
+
+        .output-section::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="nav-bar">
+        <a href="https://aidoc.work" class="nav-brand">
+            <span>🔧</span>
+            <span>AiDoc.work</span>
+        </a>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">🏠 首页</a>
+            <a href="文本处理工具.html" class="nav-link">🔧 文本处理</a>
+            <a href="js串处理工具.html" class="nav-link active">🔍 JSON解析</a>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="input-section">
+                <h2>JSON解析工具</h2>
+                <textarea id="input" placeholder="粘贴JSON或JS文本..."></textarea>
+                <div class="controls">
+                    <button onclick="parseAndRender()">处理文本</button>
+                    <button class="toggle-values-btn" onclick="toggleValues()">显示字段值</button>
+                </div>
+            </div>
+            <div class="output-section">
+                <div id="directoryTree"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let nodeId = 0;
+        let showValues = true;
+        const treeState = {
+            expandedNodes: new Set(),
+            nodeMap: new Map()
+        };
+
+        function toggleValues() {
+            showValues = !showValues;
+            const btn = document.querySelector('.toggle-values-btn');
+            const valueTexts = document.querySelectorAll('.value-text');
+            
+            btn.textContent = showValues ? '隐藏字段值' : '显示字段值';
+            btn.classList.toggle('hide-values');
+            
+            valueTexts.forEach(text => {
+                text.classList.toggle('hidden');
+            });
+        }
+
+        function parseAndRender() {
+            try {
+                const input = document.getElementById('input').value;
+                const data = new Function(`return ${input}`)();
+
+                const directoryTreeContainer = document.getElementById('directoryTree');
+                directoryTreeContainer.innerHTML = '';
+                const directoryTree = buildStructureTree(data);
+                renderTree(directoryTree, directoryTreeContainer);
+
+                // 设置滚动位置到最右侧
+                const outputSection = document.querySelector('.output-section');
+                outputSection.scrollLeft = outputSection.scrollWidth;
+
+            } catch (e) {
+                alert('解析失败: ' + e.message);
+            }
+        }
+
+        class TreeNode {
+            constructor(key, value, depth, parent = null) {
+                this.id = nodeId++;
+                this.key = key || 'root';
+                this.value = value;
+                this.depth = depth || 0;
+                this.children = [];
+                this.isObject = false;
+                this.expanded = !['hitDecisionMap', 'ruleVoMap', 'hitScriptMap'].includes(key) && depth < 3;
+                this.parent = parent;
+            }
+        }
+
+        function buildStructureTree(data, parentKey = '', depth = 0, parent = null) {
+            const node = new TreeNode(parentKey, data, depth, parent);
+            if (typeof data === 'object' && data !== null) {
+                node.isObject = true;
+                const entries = Array.isArray(data) ? data.entries() : Object.entries(data);
+                for (const [key, value] of entries) {
+                    const child = buildStructureTree(
+                        value,
+                        Array.isArray(data) ? `[${key}]` : key,
+                        depth + 1,
+                        node
+                    );
+                    node.children.push(child);
+                }
+            }
+            return node;
+        }
+
+        function renderTree(tree, container) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'tree-node';
+            renderNode(tree, wrapper);
+            container.appendChild(wrapper);
+        }
+
+        function renderNode(node, container) {
+            const nodeElement = document.createElement('div');
+            nodeElement.className = `depth-${node.depth}`;
+            const header = document.createElement('div');
+            header.className = `node-header ${node.expanded ? '' : 'collapsed'}`;
+            header.onclick = () => toggleNode(node);
+
+            const toggle = document.createElement('span');
+            toggle.className = 'toggle-icon';
+            toggle.textContent = node.isObject ? '▼' : '·';
+            header.appendChild(toggle);
+
+            const keyContent = document.createElement('div');
+            keyContent.className = 'key-content';
+
+            const keySpan = document.createElement('span');
+            keySpan.className = 'key-text';
+            keySpan.textContent = node.key;
+            keyContent.appendChild(keySpan);
+
+            if (node.isObject) {
+                const typeTag = document.createElement('span');
+                typeTag.className = 'type-tag';
+                typeTag.textContent = Array.isArray(node.value) ? 'Array' : 'Object';
+                keyContent.appendChild(typeTag);
+            } else if (showValues) {
+                const valueSpan = document.createElement('span');
+                valueSpan.className = 'value-text';
+                valueSpan.textContent = `= ${JSON.stringify(node.value)}`;
+                keyContent.appendChild(valueSpan);
+            }
+
+            header.appendChild(keyContent);
+
+            const content = document.createElement('div');
+            content.className = 'node-content';
+            content.style.display = node.expanded ? 'block' : 'none';
+
+            node.children.forEach(child => {
+                const childWrapper = document.createElement('div');
+                childWrapper.className = 'tree-node';
+                renderNode(child, childWrapper);
+                content.appendChild(childWrapper);
+            });
+
+            nodeElement.appendChild(header);
+            nodeElement.appendChild(content);
+            container.appendChild(nodeElement);
+
+            treeState.nodeMap.set(node.id, { element: content, node });
+
+            if (node.children.length === 0) {
+                const copyIcon = document.createElement('span');
+                copyIcon.className = 'copy-icon';
+                copyIcon.innerHTML = '📋';
+                copyIcon.title = '双击复制路径';
+                header.appendChild(copyIcon);
+
+                keySpan.addEventListener('dblclick', () => {
+                    const path = getNodePath(node);
+                    copyToClipboard(path, keySpan);
+                });
+
+                copyIcon.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const path = getNodePath(node);
+                    copyToClipboard(path, keySpan);
+                });
+            }
+        }
+
+        function getNodePath(node) {
+            const path = [];
+            let currentNode = node;
+            while (currentNode) {
+                if (!currentNode.key.match(/^\[\d+\]$/)) {
+                    path.unshift(currentNode.key);
+                }
+                if (currentNode.parent && currentNode.parent.key === 'root') {
+                    break;
+                }
+                currentNode = treeState.nodeMap.get(currentNode.id)?.node.parent;
+            }
+            return path.join('.').replace(/^\./, '');
+        }
+
+        function copyToClipboard(text, keySpan) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+
+            const successSpan = document.createElement('span');
+            successSpan.className = 'copy-success';
+            successSpan.innerHTML = '✓ 已复制';
+            keySpan.insertAdjacentElement('afterend', successSpan);
+
+            setTimeout(() => {
+                if (successSpan.parentNode) {
+                    successSpan.parentNode.removeChild(successSpan);
+                }
+            }, 2000);
+        }
+
+        function toggleNode(node) {
+            node.expanded = !node.expanded;
+            const nodeData = treeState.nodeMap.get(node.id);
+            if (nodeData) {
+                nodeData.element.style.display = node.expanded ? 'block' : 'none';
+                nodeData.element.parentElement.querySelector('.node-header').classList.toggle('collapsed');
+            }
+        }
+    </script>
+</body>
+</html>
