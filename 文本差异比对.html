@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AiDoc.work - 文本差异比对</title>
+    <link rel="icon" type="image/png" href="https://www.aidoc.work/favicon.png">
+    <style>
+        /* 全局基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+        }
+
+        /* 导航栏样式 */
+        .nav-bar {
+            background: white;
+            padding: 15px 25px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #1a73e8;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-link {
+            color: #4a5568;
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-link:hover {
+            background: #f0f2f5;
+            color: #1a73e8;
+        }
+
+        .nav-link.active {
+            background: #e8f0fe;
+            color: #1a73e8;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 1rem auto;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #1a73e8;
+            margin-bottom: 1.2rem;
+            font-size: 1.8em;
+            text-align: center;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 25px;
+        }
+
+        .text-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .text-area label {
+            font-size: 16px;
+            color: #495057;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        textarea {
+            width: 100%;
+            height: 250px;
+            padding: 15px;
+            border: 2px solid #1a73e8;
+            border-radius: 8px;
+            resize: vertical;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            background: #f8f9ff;
+            transition: all 0.2s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 120px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #72f2ff 0%, #9b6dff 50%, #ff6b6b 100%);
+            background-size: 200% auto;
+            color: white;
+            text-shadow: 0 0 8px rgba(255,255,255,0.3);
+            box-shadow: 0 0 20px rgba(114, 242, 255, 0.5);
+            animation: gradientFlow 15s linear infinite;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            color: #4a5568;
+            font-size: 0.9em;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        #resultContent {
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            min-height: 100px;
+            background-color: #f8f9fa;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 18px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+
+        .same {
+            color: #495057;
+            font-size: 18px;
+        }
+
+        .diff {
+            color: #e03131;
+            background-color: #fff5f5;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin: 0 2px;
+            font-weight: 600;
+            text-decoration: underline;
+            font-size: 18px;
+            position: relative;
+        }
+
+        .diff::after {
+            content: attr(data-replacement);
+            color: #228be6;
+            text-decoration: none;
+            margin-left: 8px;
+            font-weight: 600;
+            background-color: #e7f5ff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid #74c0fc;
+        }
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @media (max-width: 768px) {
+            .input-group {
+                flex-direction: column;
+                gap: 20px;
+            }
+            .container {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="nav-bar">
+        <a href="https://www.aidoc.work" class="nav-brand">
+            <span>🔧</span>
+            <span>AiDoc.work</span>
+        </a>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">🏠 首页</a>
+            <a href="文本处理工具.html" class="nav-link">🔧 文本处理</a>
+            <a href="文本差异比对.html" class="nav-link active">🔍 差异比对</a>
+            <a href="js串处理工具.html" class="nav-link">📝 JSON解析</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>文本差异比对工具</h1>
+        <div class="input-group">
+            <div class="text-area">
+                <label for="text1">文本1：</label>
+                <textarea id="text1" placeholder="请输入第一段文本"></textarea>
+            </div>
+            <div class="text-area">
+                <label for="text2">文本2：</label>
+                <textarea id="text2" placeholder="请输入第二段文本"></textarea>
+            </div>
+        </div>
+        <div class="button-group">
+            <button id="compareBtn" class="btn btn-primary">🔍 比较文本</button>
+            <button id="clearBtn" class="btn btn-danger">🗑️ 清空</button>
+        </div>
+        <div class="stats">
+            <div class="stat-item">文本1字符数: <span id="charCount1">0</span></div>
+            <div class="stat-item">文本2字符数: <span id="charCount2">0</span></div>
+            <div class="stat-item">差异数: <span id="diffCount">0</span></div>
+        </div>
+        <div id="resultContent"></div>
+    </div>
+
+    <script>
+        /**
+         * 初始化文本对比工具
+         */
+        function initializeTextCompare() {
+            const text1 = document.getElementById('text1');
+            const text2 = document.getElementById('text2');
+            const compareBtn = document.getElementById('compareBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const charCount1 = document.getElementById('charCount1');
+            const charCount2 = document.getElementById('charCount2');
+            const diffCount = document.getElementById('diffCount');
+            const resultContent = document.getElementById('resultContent');
+
+            /**
+             * 比较两段文本
+             */
+            function compareTexts() {
+                const str1 = text1.value;
+                const str2 = text2.value;
+
+                // 更新字符数统计
+                charCount1.textContent = str1.length;
+                charCount2.textContent = str2.length;
+
+                if (!str1 && !str2) {
+                    resultContent.innerHTML = '<div class="same">两段文本都为空</div>';
+                    diffCount.textContent = '差异数: 0';
+                    return;
+                }
+
+                if (str1 === str2) {
+                    resultContent.innerHTML = '<div class="same">两段文本完全一致</div>';
+                    diffCount.textContent = '差异数: 0';
+                    return;
+                }
+
+                // 计算差异
+                const diffs = findDifferences(str1, str2);
+                diffCount.textContent = `差异数: ${diffs.length}`;
+
+                // 显示差异
+                let html = '';
+                let lastPos = 0;
+
+                diffs.forEach(diff => {
+                    // 添加差异前的相同部分
+                    if (diff.start > lastPos) {
+                        html += `<span class="same">${escapeHtml(str1.substring(lastPos, diff.start))}</span>`;
+                    }
+                    // 添加差异部分
+                    html += `<span class="diff" data-replacement="${escapeHtml(diff.text2)}">${escapeHtml(diff.text1)}</span>`;
+                    lastPos = diff.end;
+                });
+
+                // 添加最后的相同部分
+                if (lastPos < str1.length) {
+                    html += `<span class="same">${escapeHtml(str1.substring(lastPos))}</span>`;
+                }
+
+                resultContent.innerHTML = html;
+            }
+
+            /**
+             * 查找文本差异
+             * @param {string} str1 - 第一段文本
+             * @param {string} str2 - 第二段文本
+             * @returns {Array} 差异数组
+             */
+            function findDifferences(str1, str2) {
+                const diffs = [];
+                let i = 0;
+                let start = -1;
+
+                while (i < str1.length || i < str2.length) {
+                    if (str1[i] !== str2[i]) {
+                        if (start === -1) start = i;
+                    } else if (start !== -1) {
+                        diffs.push({
+                            start: start,
+                            end: i,
+                            text1: str1.substring(start, i),
+                            text2: str2.substring(start, i)
+                        });
+                        start = -1;
+                    }
+                    i++;
+                }
+
+                if (start !== -1) {
+                    diffs.push({
+                        start: start,
+                        end: i,
+                        text1: str1.substring(start),
+                        text2: str2.substring(start)
+                    });
+                }
+
+                return diffs;
+            }
+
+            /**
+             * HTML转义
+             * @param {string} text - 需要转义的文本
+             * @returns {string} 转义后的文本
+             */
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // 事件监听
+            compareBtn.addEventListener('click', compareTexts);
+            
+            clearBtn.addEventListener('click', () => {
+                text1.value = '';
+                text2.value = '';
+                resultContent.innerHTML = '';
+                charCount1.textContent = '0';
+                charCount2.textContent = '0';
+                diffCount.textContent = '差异数: 0';
+            });
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', initializeTextCompare);
+    </script>
+</body>
+</html> 
