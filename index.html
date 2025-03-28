@@ -2,27 +2,28 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>AiDoc.work - 首页</title>
     <link rel="icon" type="image/png" href="https://www.aidoc.work/favicon.png">
+    <title>AiDoc.work - 文本处理工具</title>
+    
+    <!-- ================= 样式表 ================= -->
     <style>
+        /* 全局基础样式 */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
         }
 
         body {
-            background: #f8f9fa;
-            min-height: 100vh;
-            color: #333;
+            background: #f0f2f5;
         }
 
         /* 导航栏样式 */
         .nav-bar {
             background: white;
-            padding: 12px 20px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            padding: 15px 25px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             position: sticky;
             top: 0;
             z-index: 1000;
@@ -32,29 +33,29 @@
         }
 
         .nav-brand {
-            font-size: 1.1em;
+            font-size: 1.2em;
             font-weight: 600;
             color: #1a73e8;
             text-decoration: none;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
 
         .nav-links {
             display: flex;
-            gap: 15px;
+            gap: 20px;
         }
 
         .nav-link {
-            color: #666;
+            color: #4a5568;
             text-decoration: none;
-            padding: 4px 10px;
-            border-radius: 4px;
+            padding: 6px 12px;
+            border-radius: 6px;
             transition: all 0.2s;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
         }
 
         .nav-link:hover {
@@ -67,93 +68,228 @@
             color: #1a73e8;
         }
 
-        /* 主要内容区域 */
-        .main-content {
-            max-width: 1000px;
+        .container {
+            max-width: 800px;
             margin: 1rem auto;
-            padding: 0 20px;
-        }
-
-        .welcome-section {
-            text-align: center;
-            margin-bottom: 1.5rem;
-            padding: 1rem;
-        }
-
-        .welcome-section h1 {
-            color: #1a73e8;
-            font-size: 2em;
-            margin-bottom: 0.4rem;
-        }
-
-        .welcome-section p {
-            color: #666;
-            font-size: 1em;
-        }
-
-        /* 工具卡片网格 */
-        .tools-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .tool-card {
+            padding: 20px;
             background: white;
-            border-radius: 8px;
-            padding: 1.2rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            transition: all 0.2s ease;
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-        }
-
-        .tool-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .tool-icon {
-            font-size: 1.5em;
-        }
-
-        .tool-title {
-            color: #1a73e8;
-            font-size: 1.2em;
-            font-weight: 600;
-        }
-
-        .tool-description {
-            color: #666;
-            line-height: 1.5;
-            font-size: 0.95em;
-        }
-
-        .tool-tags {
-            display: flex;
-            gap: 0.4rem;
-            flex-wrap: wrap;
-            margin-top: 0.5rem;
-        }
-
-        .tool-tag {
-            background: #f0f2f5;
-            color: #666;
-            padding: 0.2rem 0.6rem;
             border-radius: 12px;
-            font-size: 0.85em;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        @media (max-width: 768px) {
-            .tools-grid {
-                grid-template-columns: 1fr;
-            }
+        h1 {
+            color: #1a73e8;
+            margin-bottom: 1.2rem;
+            font-size: 1.8em;
+            text-align: center;
+        }
+
+        .text-box {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            margin: 10px 0;
+            border: 2px solid #1a73e8;
+            border-radius: 8px;
+            resize: vertical;
+            font-size: 14px;
+            line-height: 1.6;
+            background: #f8f9ff;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 12px;
+            margin: 15px 0;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+
+        .separator-select {
+            padding: 8px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8f9fa;
+            cursor: pointer;
+            font-size: 14px;
+            color: #4a5568;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234a5568' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            padding-right: 40px;
+            height: 40px;
+            min-width: 160px;
+        }
+
+        .separator-select:hover {
+            background-color: #f1f5f9;
+            border-color: #cbd5e0;
+            transform: translateY(-1px);
+        }
+
+        .separator-select:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #72f2ff 0%, #9b6dff 50%, #ff6b6b 100%);
+            background-size: 200% auto;
+            color: white;
+            text-shadow: 0 0 8px rgba(255,255,255,0.3);
+            box-shadow: 0 0 20px rgba(114, 242, 255, 0.5);
+            animation: gradientFlow 15s linear infinite;
+        }
+
+        .btn-copied {
+            background: #A0C49D !important;
+            box-shadow: 0 0 12px rgba(52, 168, 83, 0.3) !important;
+            animation: none !important;
+        }
+
+        .btn-copied::after {
+            content: " ✅";
+            display: inline-block;
+            margin-left: 8px;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .stats {
+            color: #4a5568;
+            font-size: 0.9em;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin: 15px 0;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        #output.text-box {
+            background: #f3f4f6;
+            border-color: #cbd5e0;
+        }
+
+        /* 新增替换功能样式 */
+        .replace-container {
+            display: none; /* 默认隐藏 */
+            gap: 8px;
+            width: auto;
+            flex: 1;
+        }
+
+        .replace-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #1a73e8;
+            border-radius: 6px;
+            font-size: 14px;
+            height: 40px;
+            min-width: 120px;
+            max-width: 160px;
+        }
+
+        .dedup-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+            border: 1px solid #e2e8f0;
+            height: 40px;
+            min-width: 160px;
+            justify-content: center;
+        }
+
+        .dedup-option:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e0;
+            transform: translateY(-1px);
+        }
+
+        .dedup-option input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #1a73e8;
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .dedup-option input[type="checkbox"]:checked {
+            background: linear-gradient(135deg, rgba(26, 115, 232, 0.8) 0%, rgba(26, 115, 232, 1) 100%);
+            border-color: transparent;
+            box-shadow: 0 0 12px rgba(26, 115, 232, 0.3);
+        }
+
+        .dedup-option input[type="checkbox"]:checked::after {
+            content: "✓";
+            position: absolute;
+            color: white;
+            font-size: 14px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-shadow: 0 0 4px rgba(255,255,255,0.5);
+        }
+
+        .dedup-option span {
+            font-size: 14px;
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(3px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
+
 <body>
     <!-- 导航栏 -->
     <nav class="nav-bar">
@@ -162,62 +298,204 @@
             <span>AiDoc.work</span>
         </a>
         <div class="nav-links">
-            <a href="index.html" class="nav-link active">🏠 首页</a>
-            <a href="文本处理工具.html" class="nav-link">🔧 文本处理</a>
+            <a href="index.html" class="nav-link">🏠 首页</a>
+            <a href="文本处理工具.html" class="nav-link active">🔧 文本处理</a>
             <a href="文本差异比对.html" class="nav-link">🔍 差异比对</a>
             <a href="js串处理工具.html" class="nav-link">📝 JSON解析</a>
         </div>
     </nav>
 
-    <!-- 主要内容区域 -->
-    <div class="main-content">
-        <!-- 欢迎区域 -->
-        <section class="welcome-section">
-            <h1>AiDoc.work</h1>
-            <p>实用的在线工具集合</p>
-        </section>
+    <!-- ================= 页面结构 ================= -->
+    <div class="container">
+        <h1>文本处理集成</h1>
+        
+        <!-- 文本输入区域 -->
+        <textarea 
+            id="input" 
+            class="text-box" 
+            placeholder="请输入需要处理的文本      (◍•ᴗ•◍)ﾉ♡ "
+            oninput="updateStats()"
+        ></textarea>
 
-        <!-- 工具卡片网格 -->
-        <div class="tools-grid">
-            <!-- 文本处理工具卡片 -->
-            <a href="文本处理工具.html" class="tool-card">
-                <div class="tool-icon">🔧</div>
-                <h2 class="tool-title">文本处理工具</h2>
-                <p class="tool-description">
-                    支持文本去重、分隔符处理、批量替换等功能
-                </p>
-                <div class="tool-tags">
-                    <span class="tool-tag">文本处理</span>
-                    <span class="tool-tag">去重</span>
-                </div>
-            </a>
-
-            <!-- 文本差异对比工具卡片 -->
-            <a href="文本差异比对.html" class="tool-card">
-                <div class="tool-icon">🔍</div>
-                <h2 class="tool-title">文本差异对比</h2>
-                <p class="tool-description">
-                    快速比对两段文本的差异，高亮显示不同之处
-                </p>
-                <div class="tool-tags">
-                    <span class="tool-tag">文本对比</span>
-                    <span class="tool-tag">差异分析</span>
-                </div>
-            </a>
-
-            <!-- JSON解析工具卡片 -->
-            <a href="js串处理工具.html" class="tool-card">
-                <div class="tool-icon">📝</div>
-                <h2 class="tool-title">JSON解析工具</h2>
-                <p class="tool-description">
-                    支持JSON数据的解析、展示和路径复制
-                </p>
-                <div class="tool-tags">
-                    <span class="tool-tag">JSON</span>
-                    <span class="tool-tag">可视化</span>
-                </div>
-            </a>
+        <!-- 统计信息展示 -->
+        <div class="stats">
+            <div class="stat-item">总行数: <span id="lineCount">0</span></div>
+            <div class="stat-item">去重后: <span id="uniqueCount">0</span></div>
         </div>
+
+        <!-- 操作控制区域 -->
+        <div class="control-group">
+            <select class="separator-select" id="separator">
+                <option value=",">逗号分隔</option>
+                <option value="||">'或'分隔</option>
+                <option value="custom">自定义分隔符</option>
+                <option value="replace">批量替换</option>
+                <option value="sql-in">SQL IN</option>
+            </select>
+            
+            <!-- 自定义分隔符输入 -->
+            <input
+                type="text"
+                id="customSeparator"
+                placeholder="输入自定义分隔符"
+                class="replace-input"
+                style="display: none;"
+            >
+            
+            <!-- 批量替换输入容器 -->
+            <div id="replaceContainer" class="replace-container">
+                <input
+                    type="text"
+                    id="replaceFrom"
+                    placeholder="要替换的字符"
+                    class="replace-input"
+                >
+                <input
+                    type="text"
+                    id="replaceTo"
+                    placeholder="替换为"
+                    class="replace-input"
+                >
+            </div>
+
+            <!-- 去重选项 -->
+            <label class="dedup-option">
+                <input type="checkbox" id="dedup" checked>
+                <span>去重处理</span>
+            </label>
+        </div>
+
+        <!-- 操作按钮组 -->
+        <div class="control-group">
+            <button class="btn btn-primary" onclick="processText()">🚀 处理文本</button>
+            <button class="btn btn-primary" onclick="copyResult()">📋 复制结果</button>
+        </div>
+
+        <!-- 结果输出区域 -->
+        <textarea 
+            id="output" 
+            class="text-box" 
+            placeholder="处理结果在这里          ฅ^•ﻌ•^ฅ"
+            readonly
+        ></textarea>
     </div>
+
+    <!-- ================= 脚本逻辑 ================= -->
+    <script>
+        // DOM加载完成后初始化
+        (function init() {
+            // 监听分隔符选择变化
+            document.getElementById('separator').addEventListener('change', function() {
+                const showCustom = this.value === 'custom';
+                const showReplace = this.value === 'replace';
+                
+                // 控制输入框显示状态
+                document.getElementById('customSeparator').style.display = showCustom ? 'block' : 'none';
+                document.getElementById('replaceContainer').style.display = showReplace ? 'flex' : 'none';
+            });
+        })();
+
+        /**
+         * 实时更新统计信息
+         */
+        function updateStats() {
+            const input = document.getElementById("input").value;
+            const lines = input.split('\n').filter(line => line.trim() !== '');
+            document.getElementById("lineCount").textContent = lines.length;
+            document.getElementById("uniqueCount").textContent = new Set(lines).size;
+        }
+
+        /**
+         * 核心处理函数
+         */
+        function processText() {
+            const input = document.getElementById("input").value;
+            const operation = document.getElementById("separator").value;
+            const shouldDedup = document.getElementById("dedup").checked;
+            let result = '';
+
+            // 处理输入文本
+            let lines = input.split('\n')
+                .map(line => line.trim())
+                .filter(line => line !== '');
+
+            // 去重处理
+            if (shouldDedup) {
+                lines = [...new Set(lines)];
+            }
+
+            if (operation === 'replace') {
+                // 批量替换模式
+                const from = document.getElementById("replaceFrom").value;
+                const to = document.getElementById("replaceTo").value;
+                result = lines.join('\n').replaceAll(from, to);
+            } else if (operation === 'sql-in') {
+                // SQL IN 模式
+                result = lines.map(line => `'${line}'`).join(',');
+            } else {
+                // 分隔符处理模式
+                const separator = getSelectedSeparator();
+                result = lines.join(separator);
+            }
+            
+            document.getElementById("output").value = result;
+        }
+
+        /**
+         * 获取当前选择的分隔符
+         */
+        function getSelectedSeparator() {
+            const selector = document.getElementById('separator');
+            if (selector.value === 'custom') {
+                return document.getElementById('customSeparator').value.trim() || ',';
+            }
+            return selector.value;
+        }
+
+        /**
+         * 复制结果到剪贴板
+         */
+        function copyResult() {
+            const output = document.getElementById("output");
+            const copyBtn = document.querySelector('button[onclick="copyResult()"]');
+            const originalText = copyBtn.innerHTML;
+            
+            // 创建临时textarea元素
+            const textarea = document.createElement('textarea');
+            textarea.value = output.value;
+            textarea.style.position = 'fixed';  // 防止页面滚动
+            textarea.style.opacity = '0';       // 隐藏元素
+            document.body.appendChild(textarea);
+            
+            try {
+                // 选择文本
+                textarea.select();
+                textarea.setSelectionRange(0, textarea.value.length);
+                
+                // 执行复制命令
+                const successful = document.execCommand('copy');
+                
+                if (successful) {
+                    copyBtn.classList.add('btn-copied');
+                    copyBtn.innerHTML = '📋 已复制';
+                    setTimeout(() => {
+                        copyBtn.classList.remove('btn-copied');
+                        copyBtn.innerHTML = originalText;
+                    }, 5000);
+                } else {
+                    throw new Error('复制命令执行失败');
+                }
+            } catch (err) {
+                console.error('复制失败:', err);
+                copyBtn.innerHTML = '⚠️ 复制失败';
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                }, 2000);
+            } finally {
+                // 清理临时元素
+                document.body.removeChild(textarea);
+            }
+        }
+    </script>
 </body>
 </html>
