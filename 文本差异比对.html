@@ -207,22 +207,41 @@
             font-size: 18px;
         }
 
-        .diff {
+        .deleted {
+            color: #e03131;
+            text-decoration: line-through;
+            background-color: #fff5f5;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin: 0 2px;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .added {
+            color: #2b8a3e;
+            background-color: #ebfbee;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin: 0 2px;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .modified {
             color: #e03131;
             background-color: #fff5f5;
             padding: 2px 8px;
             border-radius: 4px;
             margin: 0 2px;
             font-weight: 600;
-            text-decoration: underline;
             font-size: 18px;
             position: relative;
         }
 
-        .diff::after {
-            content: attr(data-replacement);
+        .modified::after {
+            content: "→ " attr(data-replacement);
             color: #228be6;
-            text-decoration: none;
             margin-left: 8px;
             font-weight: 600;
             background-color: #e7f5ff;
@@ -341,8 +360,14 @@
                     if (diff.start > lastPos) {
                         html += `<span class="same">${escapeHtml(str1.substring(lastPos, diff.start))}</span>`;
                     }
-                    // 添加差异部分
-                    html += `<span class="diff" data-replacement="${escapeHtml(diff.text2)}">${escapeHtml(diff.text1)}</span>`;
+                    // 根据差异类型添加相应的样式
+                    if (diff.type === 'added') {
+                        html += `<span class="added">${escapeHtml(diff.text2)}</span>`;
+                    } else if (diff.type === 'deleted') {
+                        html += `<span class="deleted">${escapeHtml(diff.text1)}</span>`;
+                    } else {
+                        html += `<span class="modified" data-replacement="${escapeHtml(diff.text2)}">${escapeHtml(diff.text1)}</span>`;
+                    }
                     lastPos = diff.end;
                 });
 
@@ -369,24 +394,71 @@
                     if (str1[i] !== str2[i]) {
                         if (start === -1) start = i;
                     } else if (start !== -1) {
-                        diffs.push({
-                            start: start,
-                            end: i,
-                            text1: str1.substring(start, i),
-                            text2: str2.substring(start, i)
-                        });
+                        const text1 = str1.substring(start, i);
+                        const text2 = str2.substring(start, i);
+                        
+                        if (!text1 && text2) {
+                            // 新增内容
+                            diffs.push({
+                                start: start,
+                                end: i,
+                                type: 'added',
+                                text1: '',
+                                text2: text2
+                            });
+                        } else if (text1 && !text2) {
+                            // 删除内容
+                            diffs.push({
+                                start: start,
+                                end: i,
+                                type: 'deleted',
+                                text1: text1,
+                                text2: ''
+                            });
+                        } else {
+                            // 修改内容
+                            diffs.push({
+                                start: start,
+                                end: i,
+                                type: 'modified',
+                                text1: text1,
+                                text2: text2
+                            });
+                        }
                         start = -1;
                     }
                     i++;
                 }
 
                 if (start !== -1) {
-                    diffs.push({
-                        start: start,
-                        end: i,
-                        text1: str1.substring(start),
-                        text2: str2.substring(start)
-                    });
+                    const text1 = str1.substring(start);
+                    const text2 = str2.substring(start);
+                    
+                    if (!text1 && text2) {
+                        diffs.push({
+                            start: start,
+                            end: i,
+                            type: 'added',
+                            text1: '',
+                            text2: text2
+                        });
+                    } else if (text1 && !text2) {
+                        diffs.push({
+                            start: start,
+                            end: i,
+                            type: 'deleted',
+                            text1: text1,
+                            text2: ''
+                        });
+                    } else {
+                        diffs.push({
+                            start: start,
+                            end: i,
+                            type: 'modified',
+                            text1: text1,
+                            text2: text2
+                        });
+                    }
                 }
 
                 return diffs;
