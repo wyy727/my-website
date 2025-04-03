@@ -489,6 +489,7 @@
         });
 
         function handleFile(file) {
+            // 重置界面状态
             loading.style.display = 'block';
             originalTable.innerHTML = '';
             transposedTable.innerHTML = '';
@@ -497,28 +498,60 @@
             errorMessage.classList.remove('show');
             dropZone.classList.remove('error');
 
+            // 检查文件大小
+            if (file.size === 0) {
+                showError('文件为空，请选择有效的Excel文件');
+                loading.style.display = 'none';
+                return;
+            }
+
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
                     const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
+                    const workbook = XLSX.read(data, { type: 'array', cellDates: true, cellNF: true });
                     
-                    // 检查是否有工作表
-                    if (!workbook.SheetNames.length) {
-                        showError('Excel文件为空，请检查文件内容');
+                    // 检查工作表
+                    if (!workbook.SheetNames || !workbook.SheetNames.length) {
+                        showError('Excel文件格式无效或为空');
+                        return;
+                    }
+
+                    // 检查是否存在数据
+                    const sheetName = workbook.SheetNames[0];
+                    if (!workbook.Sheets[sheetName]) {
+                        showError('工作表内容无效');
                         return;
                     }
 
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    originalData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                    // 使用更严格的解析选项
+                    originalData = XLSX.utils.sheet_to_json(firstSheet, { 
+                        header: 1,
+                        raw: false, // 返回格式化的字符串
+                        dateNF: 'yyyy-mm-dd', // 日期格式
+                        defval: '' // 空单元格的默认值
+                    });
 
                     if (originalData.length === 0 || originalData[0].length === 0) {
                         showError('表格内容为空，请检查文件内容');
                         return;
                     }
 
-                    // 检查数据是否有效
-                    if (originalData.some(row => row.length !== originalData[0].length)) {
+                    // 检查数据有效性
+                    if (!Array.isArray(originalData) || originalData.length === 0) {
+                        showError('无法读取表格数据，请检查文件格式');
+                        return;
+                    }
+
+                    // 检查数据结构一致性
+                    const firstRowLength = originalData[0].length;
+                    if (!firstRowLength) {
+                        showError('表格数据为空，请检查文件内容');
+                        return;
+                    }
+
+                    if (originalData.some(row => !Array.isArray(row) || row.length !== firstRowLength)) {
                         showError('表格数据格式不一致，请确保所有行的列数相同');
                         return;
                     }
@@ -549,28 +582,25 @@
         }
 
         function transposeMatrix(matrix) {
-            if (matrix.length === 0 || matrix[0].length === 0) return [];
-            
+            if (!matrix || matrix.length === 0 || !matrix[0] || matrix[0].length === 0) {
+                return [];
+            }
+
             const rows = matrix.length;
             const cols = matrix[0].length;
             const transposed = [];
-            
-            // 创建第一行（新表头）
-            const headerRow = [''];  // 第一个单元格留空
-            for (let i = 1; i < rows; i++) {
-                headerRow.push(matrix[i][0]);  // 使用原始数据第一列作为新表头
-            }
-            transposed.push(headerRow);
-            
-            // 转制其余数据
-            for (let j = 1; j < cols; j++) {
-                const newRow = [matrix[0][j]];  // 第一列使用原始表头
-                for (let i = 1; i < rows; i++) {
-                    newRow.push(matrix[i][j]);
+
+            // 创建转制后的矩阵
+            for (let j = 0; j < cols; j++) {
+                const newRow = [];
+                for (let i = 0; i < rows; i++) {
+                    // 处理空值或undefined
+                    const value = matrix[i][j];
+                    newRow.push(value === undefined || value === null ? '' : value);
                 }
                 transposed.push(newRow);
             }
-            
+
             return transposed;
         }
 
@@ -632,4 +662,4 @@
         });
     </script>
 </body>
-</html> 
+</html>
