@@ -156,6 +156,28 @@
                 grid-template-columns: 1fr;
             }
         }
+        /* 迭代日志文本框样式 */
+        .changelog-box {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 800px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .changelog-title {
+            font-size: 1.2em;
+            color: #1a73e8;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .changelog-content {
+            color: #4a5568;
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
     </style>
 </head>
 <body>
@@ -181,6 +203,17 @@
             <h1>AiDoc.work</h1>
             <p>实用的在线工具集合</p>
         </section>
+
+        <!-- 迭代日志 -->
+        <div class="changelog-box">
+            <div class="changelog-title">最近更新</div>
+            <div class="changelog-content">
+                2025-04-03: 表格转制错行修复<br>
+                2025-04-03: json解析新增字段检索<br>
+                2025-04-01: 文本差异对比新增相似度算法<br>
+                2025-04-01: 文本差异对比优化结果展示
+            </div>
+        </div>
 
         <!-- 工具卡片网格 -->
         <div class="tools-grid">
