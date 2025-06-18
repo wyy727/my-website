@@ -11,6 +11,29 @@
             box-sizing: border-box;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
+        
+        html {
+            overflow-y: scroll; /* 始终显示垂直滚动条 */
+            scrollbar-width: thin; /* Firefox */
+        }
+        
+        /* 针对WebKit浏览器的滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px; /* 滚动条宽度 */
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; /* 滚动条轨道背景色 */
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1; /* 滚动条滑块颜色 */
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8; /* 鼠标悬停时滑块颜色 */
+        }
 
         body {
             background: #f8f9fa;
@@ -193,6 +216,7 @@
             <a href="文本差异比对.html" class="nav-link">🔍 差异比对</a>
             <a href="js串处理工具.html" class="nav-link">📝 JSON解析</a>
             <a href="表格转制.html" class="nav-link">📊 表格转制</a>
+            <a href="图片色号提取.html" class="nav-link">🎨 色号提取</a>
         </div>
     </nav>
 
@@ -201,17 +225,17 @@
         <!-- 欢迎区域 -->
         <section class="welcome-section">
             <h1>AiDoc.work</h1>
-            <p>Wyy的实用在线工具集合</p>
+            <p>实用的在线工具集合</p>
         </section>
 
         <!-- 迭代日志 -->
         <div class="changelog-box">
             <div class="changelog-title">最近更新</div>
             <div class="changelog-content">
+                2025-06-18: 新增图片色号提取工具<br>
                 2025-04-03: 表格转制错行修复<br>
                 2025-04-03: json解析新增字段检索<br>
-                2025-04-01: 文本差异对比新增相似度算法<br>
-                2025-04-01: 文本差异对比优化结果展示
+                2025-04-01: 文本差异对比新增相似度算法
             </div>
         </div>
 
@@ -266,6 +290,19 @@
                 <div class="tool-tags">
                     <span class="tool-tag">Excel</span>
                     <span class="tool-tag">数据处理</span>
+                </div>
+            </a>
+
+            <!-- 图片色号提取工具卡片 -->
+            <a href="图片色号提取.html" class="tool-card">
+                <div class="tool-icon">🎨</div>
+                <h2 class="tool-title">图片色号提取</h2>
+                <p class="tool-description">
+                    从上传的图片中提取主要颜色，支持多种色号格式
+                </p>
+                <div class="tool-tags">
+                    <span class="tool-tag">图片处理</span>
+                    <span class="tool-tag">色彩提取</span>
                 </div>
             </a>
         </div>

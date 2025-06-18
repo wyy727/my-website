@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>AiDoc.work - 图片色号提取</title>
+    <link rel="icon" type="image/png" href="https://www.aidoc.work/favicon.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        html {
+            overflow-y: scroll; /* 始终显示垂直滚动条 */
+            scrollbar-width: thin; /* Firefox */
+        }
+        
+        /* 针对WebKit浏览器的滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px; /* 滚动条宽度 */
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; /* 滚动条轨道背景色 */
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1; /* 滚动条滑块颜色 */
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8; /* 鼠标悬停时滑块颜色 */
+        }
+
+        body {
+            background: #f8f9fa;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* 导航栏样式 */
+        .nav-bar {
+            background: white;
+            padding: 15px 25px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+        }
+
+        .nav-brand {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #1a73e8;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: #4a5568;
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            height: 36px;
+        }
+
+        .nav-link:hover {
+            background: #f0f2f5;
+            color: #1a73e8;
+        }
+
+        .nav-link.active {
+            background: #e8f0fe;
+            color: #1a73e8;
+        }
+
+        /* 主要内容区域 */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 20px; /* 移除底部内边距 */
+            text-align: center;
+        }
+        
+        /* 内容布局 */
+        .content-layout {
+            display: flex;
+            flex-direction: row;
+            gap: 2rem;
+            margin-top: 2rem;
+            align-items: flex-start;
+        }
+        
+        .left-column {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .right-column {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .header {
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            color: #1a73e8;
+            font-size: 2em;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1em;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* 上传区域样式 */
+        .upload-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+        }
+
+        .upload-area {
+            width: 100%;
+            max-width: 500px;
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-area:hover {
+            border-color: #1a73e8;
+            background: #f0f7ff;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #1a73e8;
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            color: #4a5568;
+            margin-bottom: 1rem;
+        }
+
+        .upload-btn {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .upload-btn:hover {
+            background: #1557b0;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* 图片预览区域 */
+        .preview-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            display: none;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .reupload-btn {
+            background: #f0f2f5;
+            color: #4a5568;
+            border: 1px solid #d1d5db;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .reupload-btn:hover {
+            background: #e2e8f0;
+        }
+
+        /* 选项区域 */
+        .options-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .option-label {
+            font-size: 0.9rem;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+        }
+
+        .option-select {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            background: white;
+            font-size: 0.9rem;
+            color: #4a5568;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 150px;
+        }
+
+        .option-select:hover {
+            border-color: #1a73e8;
+        }
+
+        .option-select:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+
+        /* 结果区域 */
+        .results-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem; /* 减少底部边距 */
+            height: auto; /* 改为自动高度 */
+            overflow: visible; /* 允许内容溢出 */
+        }
+
+        .results-title {
+            font-size: 1.2rem;
+            color: #1a73e8;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 0.6rem;
+            padding: 0.8rem;
+            width: 100%;
+            box-sizing: border-box;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .color-block {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 0.6rem 0.5rem;
+            border-radius: 7px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
+            min-height: 85px;
+            backdrop-filter: blur(5px);
+            margin: 0.1rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .color-block:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .color-info {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 0.3rem 0.3rem;
+            border-radius: 5px;
+            text-align: center;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            margin-bottom: 0.2rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .color-percentage {
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 0.15rem;
+            background: linear-gradient(135deg, #ffffff 30%, #f0f0f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .color-value {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.3rem;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.5);
+            margin-top: 0.15rem;
+            word-break: break-all;
+        }
+
+        .color-label {
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 0.2rem 0.25rem;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 0.15rem;
+            overflow: visible;
+            white-space: normal;
+            word-break: break-all;
+            line-height: 1.2;
+            max-width: 100%;
+        }
+
+        .color-block:hover .color-info {
+            background: rgba(0, 0, 0, 0.75);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transform: translateY(-1px) scale(1.005);
+        }
+
+        .color-percentage {
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 0.15rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+            letter-spacing: 0.3px;
+            background: linear-gradient(135deg, #ffffff, #e0e0e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .color-value {
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            background: rgba(0, 0, 0, 0.45);
+            padding: 0.25rem 0.3rem;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            overflow: visible;
+            white-space: normal;
+            word-break: break-all;
+            line-height: 1.2;
+            max-width: 100%;
+        }
+
+        .color-value:hover {
+            background: rgba(0, 0, 0, 0.55);
+            transform: translateY(-1px) scale(1.01);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .color-label {
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 1);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 0.25rem 0.3rem;
+            border-radius: 5px;
+            align-self: flex-start;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 0.2rem;
+            max-width: 100%;
+            overflow: visible;
+            white-space: normal;
+            word-break: break-all;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+        }
+
+        .color-block:hover .color-label {
+            opacity: 1 !important;
+            transform: scale(1.01);
+            background: rgba(0, 0, 0, 0.6);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .copy-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            z-index: 10;
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+        }
+
+        .show-copy-message {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 992px) {
+            .content-layout {
+                flex-direction: column;
+            }
+            
+            .left-column, .right-column {
+                width: 100%;
+            }
+            
+            .results-section {
+                margin-top: 1rem;
+            }
+        }
+        
+        /* 确保在所有屏幕尺寸下都显示3个色块一行 */
+        @media (min-width: 1px) {
+            .color-grid {
+                grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+                gap: 0.4rem;
+                padding: 0.4rem;
+            }
+
+            .color-block {
+                padding: 0.5rem 0.4rem;
+                border-radius: 6px;
+                min-height: 80px;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                margin: 0.05rem;
+            }
+
+            .color-info {
+                padding: 0.25rem 0.25rem;
+                border-radius: 4px;
+                margin-bottom: 0.15rem;
+            }
+
+            .color-percentage {
+                font-size: 0.85rem;
+                margin-bottom: 0.1rem;
+            }
+
+            .color-value {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.25rem;
+                border-radius: 3px;
+                margin-top: 0.1rem;
+            }
+
+            .color-label {
+                font-size: 0.6rem;
+                padding: 0.15rem 0.2rem;
+                border-radius: 3px;
+                margin-top: 0.1rem;
+            }
+        }
+
+        /* 超小屏幕下调整内边距和字体大小，但保持5个色块一行 */
+        @media (max-width: 480px) {
+            .color-grid {
+                grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+                gap: 0.4rem;
+                padding: 0.4rem;
+            }
+            
+            .color-block {
+                padding: 0.5rem 0.3rem;
+                min-height: 80px;
+            }
+            
+            .color-percentage {
+                font-size: 0.8rem;
+            }
+            
+            .color-value {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.4rem;
+                word-break: break-all;
+                white-space: normal;
+                line-height: 1.3;
+            }
+            
+            .color-label {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.3rem;
+                word-break: break-all;
+                white-space: normal;
+            }
+        }
+        
+        /* 添加超小屏幕支持 */
+        @media (max-width: 360px) {
+            .color-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                gap: 0.3rem;
+                padding: 0.3rem;
+            }
+            
+            .color-block {
+                padding: 0.4rem 0.3rem;
+                border-radius: 6px;
+                min-height: 70px;
+            }
+            
+            .color-info {
+                padding: 0.3rem 0.2rem;
+                border-radius: 5px;
+                margin-bottom: 0.1rem;
+            }
+            
+            .color-percentage {
+                font-size: 0.7rem;
+                margin-bottom: 0.2rem;
+            }
+            
+            .color-value {
+                font-size: 0.65rem;
+                padding: 0.15rem 0.25rem;
+                border-radius: 4px;
+            }
+            
+            .color-label {
+                font-size: 0.65rem;
+                padding: 0.15rem 0.3rem;
+                word-break: break-all;
+                white-space: normal;
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="nav-bar">
+        <a href="https://www.aidoc.work" class="nav-brand">
+            <span>🔧</span>
+            <span>AiDoc.work</span>
+        </a>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">🏠 首页</a>
+            <a href="文本处理工具.html" class="nav-link">🔧 文本处理</a>
+            <a href="文本差异比对.html" class="nav-link">🔍 差异比对</a>
+            <a href="js串处理工具.html" class="nav-link">📝 JSON解析</a>
+            <a href="表格转制.html" class="nav-link">📊 表格转制</a>
+            <a href="图片色号提取.html" class="nav-link active">🎨 色号提取</a>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <div class="container">
+        <!-- 标题和描述 -->
+        <div class="header">
+            <h1>从图片中提取颜色</h1>
+            <p>把你最喜爱的色彩用调色板保存下来。使用在线调色板生成器，你可以在几秒钟内创建动人的配色方案。只需上传一张照片，系统会自动捕捉该照片中的颜色，并创建自定义调色板。</p>
+        </div>
+
+        <!-- 内容布局 -->
+        <div class="content-layout">
+            <!-- 左侧列：上传区域 -->
+            <div class="left-column">
+                <!-- 上传区域 -->
+                <div class="upload-section">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">拖放图片到这里，或点击上传</div>
+                        <button class="upload-btn" id="uploadBtn">选择图片</button>
+                        <input type="file" id="fileInput" accept="image/*">
+                    </div>
+
+                    <!-- 图片预览区域 -->
+                    <div class="preview-container" id="previewContainer">
+                        <img id="previewImage" class="preview-image" src="" alt="预览图片">
+                        <button class="reupload-btn" id="reuploadBtn">重新上传</button>
+                    </div>
+                </div>
+
+                <!-- 选项区域 -->
+                <div class="options-section">
+                    <div class="option-group">
+                        <div class="option-label">颜色格式</div>
+                        <select class="option-select" id="colorFormat">
+                            <option value="hex">HEX</option>
+                            <option value="rgb">RGB</option>
+                            <option value="cmyk">CMYK</option>
+                            <option value="hsl">HSL</option>
+                        </select>
+                    </div>
+
+                    <div class="option-group">
+                        <div class="option-label">颜色数量</div>
+                        <select class="option-select" id="colorCount">
+                            <option value="3" selected>3个颜色</option>
+                            <option value="6">6个颜色</option>
+                            <option value="9">9个颜色</option>
+                            <option value="12">12个颜色</option>
+                            <option value="15">15个颜色</option>
+                            <option value="20">20个颜色</option>
+                            <option value="25">25个颜色</option>
+                            <option value="30">30个颜色</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧列：结果区域 -->
+            <div class="right-column">
+                <!-- 结果区域 -->
+                <div class="results-section" id="resultsSection" style="display: none;">
+                    <div class="results-title">提取的颜色</div>
+                    <div class="color-grid" id="colorGrid">
+                        <!-- 颜色块将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadArea = document.getElementById('uploadArea');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const reuploadBtn = document.getElementById('reuploadBtn');
+        const resultsSection = document.getElementById('resultsSection');
+        const colorGrid = document.getElementById('colorGrid');
+        const colorFormat = document.getElementById('colorFormat');
+        const colorCount = document.getElementById('colorCount');
+
+        // 上传按钮点击事件
+        uploadBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // 拖放功能
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#1a73e8';
+            uploadArea.style.background = '#f0f7ff';
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = '#d1d5db';
+            uploadArea.style.background = 'white';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#d1d5db';
+            uploadArea.style.background = 'white';
+            
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        // 文件选择事件
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // 重新上传按钮
+        reuploadBtn.addEventListener('click', () => {
+            previewContainer.style.display = 'none';
+            uploadArea.style.display = 'block';
+            resultsSection.style.display = 'none';
+        });
+        
+        // 设置默认颜色格式为HEX和默认颜色数量为3
+        colorFormat.value = 'hex';
+        colorCount.value = '3';
+
+        // 颜色格式和数量变化事件
+        colorFormat.addEventListener('change', updateColorDisplay);
+        colorCount.addEventListener('change', () => {
+            if (previewImage.src) {
+                analyzeImage();
+            }
+        });
+
+        // 处理上传的文件
+        function handleFile(file) {
+            if (!file.type.match('image.*')) {
+                alert('请上传图片文件！');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                uploadArea.style.display = 'none';
+                previewContainer.style.display = 'block';
+                analyzeImage();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 分析图片颜色
+        function analyzeImage() {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0, img.width, img.height);
+
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const colors = extractColors(imageData, parseInt(colorCount.value));
+                displayColors(colors);
+                resultsSection.style.display = 'block';
+            };
+            img.src = previewImage.src;
+        }
+
+        // 提取颜色
+        function extractColors(imageData, colorNum) {
+            const pixelCount = imageData.width * imageData.height;
+            const pixelArray = imageData.data;
+            const colorMap = {};
+
+            // 采样率，减少计算量
+            const sampleRate = Math.max(1, Math.floor(pixelCount / 10000));
+
+            for (let i = 0; i < pixelArray.length; i += 4 * sampleRate) {
+                const r = pixelArray[i];
+                const g = pixelArray[i + 1];
+                const b = pixelArray[i + 2];
+                const a = pixelArray[i + 3];
+
+                // 忽略透明像素
+                if (a < 128) continue;
+
+                // 量化颜色，减少颜色数量
+                const quantizedR = Math.round(r / 8) * 8;
+                const quantizedG = Math.round(g / 8) * 8;
+                const quantizedB = Math.round(b / 8) * 8;
+
+                const colorKey = `${quantizedR},${quantizedG},${quantizedB}`;
+
+                if (colorMap[colorKey]) {
+                    colorMap[colorKey].count++;
+                } else {
+                    colorMap[colorKey] = {
+                        r: quantizedR,
+                        g: quantizedG,
+                        b: quantizedB,
+                        count: 1
+                    };
+                }
+            }
+
+            // 转换为数组并排序
+            let colorArray = Object.values(colorMap);
+            colorArray.sort((a, b) => b.count - a.count);
+
+            // 计算百分比
+            const totalSamples = colorArray.reduce((sum, color) => sum + color.count, 0);
+            colorArray = colorArray.map(color => {
+                return {
+                    ...color,
+                    percentage: Math.round((color.count / totalSamples) * 100)
+                };
+            });
+
+            // 取前N个颜色
+            colorArray = colorArray.slice(0, colorNum);
+
+            // 重新计算百分比，确保总和为100%
+            const totalPercentage = colorArray.reduce((sum, color) => sum + color.percentage, 0);
+            if (totalPercentage !== 100) {
+                const factor = 100 / totalPercentage;
+                let sumPercentage = 0;
+                
+                // 调整前N-1个颜色的百分比
+                for (let i = 0; i < colorArray.length - 1; i++) {
+                    colorArray[i].percentage = Math.round(colorArray[i].percentage * factor);
+                    sumPercentage += colorArray[i].percentage;
+                }
+                
+                // 最后一个颜色的百分比为剩余部分
+                colorArray[colorArray.length - 1].percentage = 100 - sumPercentage;
+            }
+
+            return colorArray;
+        }
+
+        // 显示颜色
+        function displayColors(colors) {
+            colorGrid.innerHTML = '';
+            
+            colors.forEach(color => {
+                const colorBlock = document.createElement('div');
+                colorBlock.className = 'color-block';
+                colorBlock.style.backgroundColor = `rgb(${color.r}, ${color.g}, ${color.b})`;
+                
+                // 创建颜色标签元素 - 显示在顶部
+                const colorLabel = document.createElement('div');
+                colorLabel.className = 'color-label';
+                colorLabel.textContent = `#${((1 << 24) + (color.r << 16) + (color.g << 8) + color.b).toString(16).slice(1).toUpperCase()}`;
+                colorLabel.style.opacity = '0.7';
+                
+                // 创建颜色信息元素 - 显示在底部
+                const colorInfo = document.createElement('div');
+                colorInfo.className = 'color-info';
+                
+                // 我们现在使用固定的白色文字，因为背景是半透明黑色
+                // 但仍然保留亮度计算，以便将来可能的样式调整
+                const brightness = (color.r * 299 + color.g * 587 + color.b * 114) / 1000;
+                
+                const percentage = document.createElement('div');
+                percentage.className = 'color-percentage';
+                percentage.textContent = `${color.percentage}%`;
+                
+                const colorValue = document.createElement('div');
+                colorValue.className = 'color-value';
+                colorValue.textContent = formatColorValue(color);
+                
+                const copyMessage = document.createElement('div');
+                copyMessage.className = 'copy-message';
+                copyMessage.textContent = '已复制';
+                
+                colorInfo.appendChild(percentage);
+                colorInfo.appendChild(colorValue);
+                colorBlock.appendChild(colorLabel);
+                colorBlock.appendChild(colorInfo);
+                colorBlock.appendChild(copyMessage);
+                
+                // 点击复制颜色值
+                colorBlock.addEventListener('click', () => {
+                    const colorText = formatColorValue(color);
+                    navigator.clipboard.writeText(colorText).then(() => {
+                        copyMessage.classList.add('show-copy-message');
+                        setTimeout(() => {
+                            copyMessage.classList.remove('show-copy-message');
+                        }, 1500);
+                    });
+                });
+                
+                colorGrid.appendChild(colorBlock);
+            });
+        }
+
+        // 格式化颜色值
+        function formatColorValue(color) {
+            const { r, g, b } = color;
+            
+            switch (colorFormat.value) {
+                case 'rgb':
+                    return `RGB(${r}, ${g}, ${b})`;
+                case 'hex':
+                    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`.toUpperCase();
+                case 'cmyk':
+                    const k = 1 - Math.max(r / 255, g / 255, b / 255);
+                    const c = k === 1 ? 0 : Math.round(((1 - r / 255 - k) / (1 - k)) * 100);
+                    const m = k === 1 ? 0 : Math.round(((1 - g / 255 - k) / (1 - k)) * 100);
+                    const y = k === 1 ? 0 : Math.round(((1 - b / 255 - k) / (1 - k)) * 100);
+                    const kPercent = Math.round(k * 100);
+                    return `CMYK(${c}%, ${m}%, ${y}%, ${kPercent}%)`;
+                case 'hsl':
+                    const rNorm = r / 255;
+                    const gNorm = g / 255;
+                    const bNorm = b / 255;
+                    const max = Math.max(rNorm, gNorm, bNorm);
+                    const min = Math.min(rNorm, gNorm, bNorm);
+                    let h, s, l = (max + min) / 2;
+                    
+                    if (max === min) {
+                        h = s = 0; // 灰色
+                    } else {
+                        const d = max - min;
+                        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                        
+                        switch (max) {
+                            case rNorm:
+                                h = (gNorm - bNorm) / d + (gNorm < bNorm ? 6 : 0);
+                                break;
+                            case gNorm:
+                                h = (bNorm - rNorm) / d + 2;
+                                break;
+                            case bNorm:
+                                h = (rNorm - gNorm) / d + 4;
+                                break;
+                        }
+                        h /= 6;
+                    }
+                    
+                    return `HSL(${Math.round(h * 360)}°, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
+                default:
+                    return `RGB(${r}, ${g}, ${b})`;
+            }
+        }
+
+        // 更新颜色显示
+        function updateColorDisplay() {
+            const colorBlocks = document.querySelectorAll('.color-block');
+            if (colorBlocks.length === 0) return;
+            
+            // 获取当前显示的颜色
+            const colors = [];
+            colorBlocks.forEach(block => {
+                const style = window.getComputedStyle(block);
+                const bgColor = style.backgroundColor;
+                const rgb = bgColor.match(/\d+/g).map(Number);
+                const percentage = block.querySelector('.color-percentage').textContent.replace('%', '');
+                
+                colors.push({
+                    r: rgb[0],
+                    g: rgb[1],
+                    b: rgb[2],
+                    percentage: parseInt(percentage)
+                });
+            });
+            
+            // 重新显示颜色
+            displayColors(colors);
+        }
+    </script>
+</body>
+</html>
