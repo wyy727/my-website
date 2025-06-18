@@ -842,27 +842,76 @@
                     percentage: Math.round((color.count / totalSamples) * 100)
                 };
             });
-
-            // 取前N个颜色
-            colorArray = colorArray.slice(0, colorNum);
+            
+            // 计算颜色相似度并过滤相似颜色
+            const filteredColors = [];
+            const similarityThreshold = 0.88; // 95%相似度阈值
+            
+            // 计算两个颜色的相似度
+            function calculateColorSimilarity(color1, color2) {
+                // 使用欧几里得距离计算RGB空间中的颜色相似度
+                const rDiff = color1.r - color2.r;
+                const gDiff = color1.g - color2.g;
+                const bDiff = color1.b - color2.b;
+                
+                // 计算归一化的距离 (0-1范围)
+                const distance = Math.sqrt(rDiff*rDiff + gDiff*gDiff + bDiff*bDiff) / Math.sqrt(3 * 255 * 255);
+                
+                // 返回相似度 (1 = 完全相同, 0 = 完全不同)
+                return 1 - distance;
+            }
+            
+            // 过滤相似颜色
+            for (const color of colorArray) {
+                // 检查这个颜色是否与已过滤的颜色相似
+                let isSimilar = false;
+                
+                for (const filteredColor of filteredColors) {
+                    const similarity = calculateColorSimilarity(color, filteredColor);
+                    
+                    if (similarity >= similarityThreshold) {
+                        // 如果相似，将当前颜色的计数添加到已过滤颜色的计数中
+                        filteredColor.count += color.count;
+                        isSimilar = true;
+                        break;
+                    }
+                }
+                
+                // 如果不相似，添加到过滤后的颜色列表
+                if (!isSimilar) {
+                    filteredColors.push(color);
+                }
+            }
+            
+            // 重新计算过滤后颜色的百分比
+            const filteredTotalSamples = filteredColors.reduce((sum, color) => sum + color.count, 0);
+            filteredColors.forEach(color => {
+                color.percentage = Math.round((color.count / filteredTotalSamples) * 100);
+            });
+            
+            // 重新排序并取前N个颜色
+            filteredColors.sort((a, b) => b.count - a.count);
+            let finalColors = filteredColors.slice(0, colorNum);
 
             // 重新计算百分比，确保总和为100%
-            const totalPercentage = colorArray.reduce((sum, color) => sum + color.percentage, 0);
+            const totalPercentage = finalColors.reduce((sum, color) => sum + color.percentage, 0);
             if (totalPercentage !== 100) {
                 const factor = 100 / totalPercentage;
                 let sumPercentage = 0;
                 
                 // 调整前N-1个颜色的百分比
-                for (let i = 0; i < colorArray.length - 1; i++) {
-                    colorArray[i].percentage = Math.round(colorArray[i].percentage * factor);
-                    sumPercentage += colorArray[i].percentage;
+                for (let i = 0; i < finalColors.length - 1; i++) {
+                    finalColors[i].percentage = Math.round(finalColors[i].percentage * factor);
+                    sumPercentage += finalColors[i].percentage;
                 }
                 
                 // 最后一个颜色的百分比为剩余部分
-                colorArray[colorArray.length - 1].percentage = 100 - sumPercentage;
+                if (finalColors.length > 0) {
+                    finalColors[finalColors.length - 1].percentage = 100 - sumPercentage;
+                }
             }
 
-            return colorArray;
+            return finalColors;
         }
 
         // 显示颜色
