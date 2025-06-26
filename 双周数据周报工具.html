@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AiDoc.work - 双周数据周报工具</title>
+    <link rel="icon" type="image/png" href="https://www.aidoc.work/favicon.png">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        /* 全局基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        
+        html {
+            overflow-y: scroll; /* 始终显示垂直滚动条 */
+            scrollbar-width: thin; /* Firefox */
+        }
+        
+        /* 针对WebKit浏览器的滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px; /* 滚动条宽度 */
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; /* 滚动条轨道背景色 */
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1; /* 滚动条滑块颜色 */
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8; /* 鼠标悬停时滑块颜色 */
+        }
+
+        body {
+            background: #f0f2f5;
+            color: #4a5568;
+        }
+
+        /* 导航栏样式 */
+        .nav-bar {
+            background: white;
+            padding: 15px 25px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+        }
+
+        .nav-brand {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #1a73e8;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: #4a5568;
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            height: 36px;
+        }
+
+        .nav-link:hover {
+            background: #f0f2f5;
+            color: #1a73e8;
+        }
+
+        .nav-link.active {
+            background: #e8f0fe;
+            color: #1a73e8;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 1rem auto;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #1a73e8;
+            text-align: center;
+            margin-bottom: 32px;
+            font-weight: 600;
+            font-size: 28px;
+        }
+
+        .upload-section {
+            text-align: center;
+            margin-bottom: 32px;
+            padding: 28px;
+            border: 2px dashed #1a73e8;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8f0fe 100%);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(26, 115, 232, 0.1) 0%, rgba(26, 115, 232, 0) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .upload-section:hover::before {
+            opacity: 1;
+        }
+
+        .upload-section:hover {
+            border-color: #0d6efd;
+            background: linear-gradient(135deg, #e8f0fe 0%, #f8f9ff 100%);
+            transform: translateY(-2px);
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #72f2ff 0%, #9b6dff 50%, #ff6b6b 100%);
+            background-size: 200% auto;
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+            text-shadow: 0 0 8px rgba(255,255,255,0.3);
+            box-shadow: 0 0 20px rgba(114, 242, 255, 0.5);
+            animation: gradientFlow 15s linear infinite;
+        }
+
+        .upload-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .chart-container {
+            height: 600px;
+            margin-top: 24px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            background-color: #fff;
+            padding: 16px;
+            transition: all 0.3s ease;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .chart-container:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .control-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.3s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #A0C49D 0%, #7FB069 100%);
+            color: white;
+            box-shadow: 0 0 20px rgba(160, 196, 157, 0.3);
+        }
+
+        .download-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(160, 196, 157, 0.4);
+        }
+
+        .filter-section {
+            margin-top: 24px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        select {
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: 2px solid #1a73e8;
+            font-size: 15px;
+            background-color: #f8f9ff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        select:hover, select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 2px 5px rgba(26, 115, 232, 0.15);
+            outline: none;
+            background-color: #e8f0fe;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px;
+            color: #7f8c8d;
+            font-style: italic;
+            font-size: 16px;
+        }
+
+        .file-name {
+            margin-top: 12px;
+            font-size: 14px;
+            color: #5a6268;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            .upload-section {
+                padding: 20px;
+            }
+            .chart-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="nav-bar">
+        <a href="https://www.aidoc.work" class="nav-brand">
+            <span>🔧</span>
+            <span>AiDoc.work</span>
+        </a>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">🏠 首页</a>
+            <a href="文本处理工具.html" class="nav-link">🔧 文本处理</a>
+            <a href="文本差异比对.html" class="nav-link">🔍 差异比对</a>
+            <a href="js串处理工具.html" class="nav-link">📝 JSON解析</a>
+            <a href="表格转制.html" class="nav-link">📊 表格转制</a>
+            <a href="图片色号提取.html" class="nav-link">🎨 色号提取</a>
+            <a href="双周数据周报工具.html" class="nav-link active">📈 双周报</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>双周数据周报工具</h1>
+        
+        <div class="upload-section" onclick="document.getElementById('file-input').click()">
+            <input type="file" id="file-input" accept=".xlsx, .xls" />
+            <button class="upload-btn">
+                选择Excel文件
+            </button>
+            <div class="file-name" id="file-name"></div>
+        </div>
+        
+        <div class="filter-section" id="filter-section" style="display: none;">
+            <select id="source-type-filter">
+                <option value="all">所有场景</option>
+            </select>
+        </div>
+        
+        <div id="chart-container" class="chart-container">
+            <div class="no-data" id="no-data">请上传Excel文件以自动生成图表</div>
+        </div>
+        
+        <div class="controls" id="controls" style="display: none;">
+            <button class="control-btn download-btn" id="download-btn">下载为图片</button>
+        </div>
+    </div>
+    
+    <script>
+        // 全局变量
+        let myChart = null;
+        let rawData = [];
+        let sourceTypes = [];
+        
+        // 初始化图表
+        function initChart() {
+            if (myChart !== null) {
+                myChart.dispose();
+            }
+            
+            myChart = echarts.init(document.getElementById('chart-container'));
+            myChart.showLoading();
+        }
+        
+        // 处理Excel文件上传
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            document.getElementById('file-name').textContent = file.name;
+            document.getElementById('no-data').style.display = 'none';
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    
+                    // 假设数据在第一个工作表
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // 将工作表转换为JSON
+                    rawData = XLSX.utils.sheet_to_json(worksheet);
+                    
+                    if (rawData.length === 0) {
+                        alert('Excel文件中没有找到数据！');
+                        return;
+                    }
+                    
+                    // 提取所有唯一的sourceType值
+                    sourceTypes = [...new Set(rawData.map(item => item.sourceType))];
+                    
+                    // 更新筛选下拉框
+                    updateSourceTypeFilter();
+                    
+                    // 显示筛选和控制按钮
+                    document.getElementById('filter-section').style.display = 'flex';
+                    document.getElementById('controls').style.display = 'flex';
+                    
+                    // 生成图表
+                    generateChart('all');
+                    
+                } catch (error) {
+                    console.error('处理Excel文件时出错:', error);
+                    alert('处理Excel文件时出错: ' + error.message);
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        });
+        
+        // 更新场景筛选下拉框
+        function updateSourceTypeFilter() {
+            const filterSelect = document.getElementById('source-type-filter');
+            
+            // 清除现有选项（保留"所有场景"选项）
+            while (filterSelect.options.length > 1) {
+                filterSelect.remove(1);
+            }
+            
+            // 添加新选项
+            sourceTypes.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                filterSelect.appendChild(option);
+            });
+            
+            // 添加事件监听器
+            filterSelect.addEventListener('change', function() {
+                generateChart(this.value);
+            });
+        }
+        
+        // 生成图表
+        function generateChart(sourceTypeFilter) {
+            initChart();
+            
+            // 筛选数据
+            let filteredData = rawData;
+            if (sourceTypeFilter !== 'all') {
+                filteredData = rawData.filter(item => item.sourceType === sourceTypeFilter);
+            }
+            
+            // 检查数据是否包含hour字段
+            let hasHourData = filteredData.some(item => item.hour !== undefined);
+            
+            // 如果数据中没有hour字段但有类似"2025/6/9 17:00"格式的day字段，也视为小时级别数据
+            if (!hasHourData && filteredData.length > 0) {
+                const firstItem = filteredData[0];
+                if (firstItem.day && typeof firstItem.day === 'string' && firstItem.day.includes(' ')) {
+                    // 将day字段的值复制到hour字段
+                    filteredData.forEach(item => {
+                        if (item.day && typeof item.day === 'string' && item.day.includes(' ')) {
+                            item.hour = item.day;
+                        }
+                    });
+                    // 更新hasHourData标志
+                    hasHourData = true;
+                }
+            }
+            
+            // 按日期和小时排序
+            filteredData.sort((a, b) => {
+                if (hasHourData) {
+                    // 如果有小时数据，按照日期+小时排序
+                    // 确保hour是字符串类型并且包含空格
+                    const getDatePart = (item) => {
+                        if (item.hour) {
+                            if (typeof item.hour === 'string' && item.hour.includes(' ')) {
+                                return item.hour.split(' ')[0];
+                            }
+                            return item.hour; // 如果hour不是预期的格式，直接返回
+                        }
+                        return item.day; // 如果没有hour字段，使用day字段
+                    };
+                    
+                    const dateA = new Date(getDatePart(a));
+                    const dateB = new Date(getDatePart(b));
+                    
+                    if (dateA.getTime() === dateB.getTime()) {
+                        // 如果日期相同，按小时排序
+                        const getTimePart = (item) => {
+                            if (item.hour) {
+                                if (typeof item.hour === 'string' && item.hour.includes(' ')) {
+                                    return item.hour.split(' ')[1];
+                                }
+                                return '00:00'; // 默认时间
+                            }
+                            return '00:00';
+                        };
+                        
+                        const hourA = getTimePart(a);
+                        const hourB = getTimePart(b);
+                        return hourA.localeCompare(hourB);
+                    }
+                    return dateA - dateB;
+                } else {
+                    // 如果没有小时数据，只按日期排序
+                    return new Date(a.day) - new Date(b.day);
+                }
+            });
+            
+            // 准备图表数据
+            // 使用hour字段（如果存在），否则使用day字段
+            const timePoints = [...new Set(filteredData.map(item => {
+                // 确保hour字段是可用的字符串格式
+                if (item.hour !== undefined) {
+                    if (typeof item.hour === 'string') {
+                        return item.hour;
+                    } else {
+                        // 如果hour不是字符串，尝试转换
+                        return String(item.hour);
+                    }
+                }
+                return item.day;
+            }))];
+            
+            // 计算每个时间点的总请求量和拦截量
+            const totalData = [];
+            const killData = [];
+            const blockRateData = [];
+            
+            timePoints.forEach(timePoint => {
+                 // 筛选当前时间点的数据
+                 const pointData = hasHourData 
+                     ? filteredData.filter(item => {
+                         if (item.hour === undefined) return false;
+                         
+                         // 处理不同类型的hour字段
+                         if (typeof item.hour === 'string' && typeof timePoint === 'string') {
+                             return item.hour === timePoint;
+                         } else {
+                             // 尝试转换为字符串进行比较
+                             return String(item.hour) === String(timePoint);
+                         }
+                     })
+                     : filteredData.filter(item => item.day === timePoint);
+                 
+                 // 计算当前时间点的总请求量和拦截量
+                 const pointTotal = pointData.reduce((sum, item) => sum + (item.total || 0), 0);
+                 const pointKill = pointData.reduce((sum, item) => sum + (item.kill || 0), 0);
+                 
+                 // 计算拦截率
+                 const blockRate = pointTotal > 0 ? (pointKill / pointTotal * 100).toFixed(2) : 0;
+                 
+                 totalData.push(pointTotal);
+                 killData.push(pointKill);
+                 blockRateData.push(blockRate);
+             });
+            
+            // 将时间点格式化为显示格式
+            const formattedTimePoints = timePoints.map(timePoint => {
+                // 确保timePoint是字符串
+                const timePointStr = String(timePoint);
+                
+                // 检查是否为小时格式（包含空格，如 "2025/6/9 17:00"）
+                if (timePointStr.includes(' ')) {
+                    // 尝试标准化日期时间格式
+                    try {
+                        const [datePart, timePart] = timePointStr.split(' ');
+                        const date = new Date(datePart);
+                        if (!isNaN(date.getTime())) {
+                            return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${timePart}`;
+                        }
+                    } catch (e) {}
+                    return timePointStr; // 如果无法解析，返回原始值
+                }
+                
+                // 检查是否为数字（Excel序列号）
+                const timePointNum = Number(timePointStr);
+                if (!isNaN(timePointNum)) {
+                    // Excel日期序列号转换为JavaScript日期
+                    const excelEpoch = new Date(1899, 11, 30); // Excel的起始日期（1900年1月0日）
+                    const msPerDay = 24 * 60 * 60 * 1000;
+                    const jsDate = new Date(excelEpoch.getTime() + timePointNum * msPerDay);
+                    
+                    // 格式化为年/月/日
+                    return `${jsDate.getFullYear()}/${jsDate.getMonth() + 1}/${jsDate.getDate()}`;
+                } else {
+                    // 尝试解析字符串日期
+                    try {
+                        const jsDate = new Date(timePointStr);
+                        if (!isNaN(jsDate.getTime())) {
+                            return `${jsDate.getFullYear()}/${jsDate.getMonth() + 1}/${jsDate.getDate()}`;
+                        }
+                    } catch (e) {}
+                }
+                // 如果无法解析，返回原始值
+                return timePointStr;
+            });
+            
+            // 配置图表选项
+            const option = {
+                title: {
+                    text: hasHourData ? '请求量、拦截量与拦截率图表（小时级别）' : '请求量、拦截量与拦截率图表',
+                    left: 'center',
+                    textStyle: {
+                        fontSize: 18,
+                        fontWeight: 'bold',
+                        color: '#2c3e50'
+                    },
+                    padding: [10, 0, 20, 0]
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    borderColor: '#e1e4e8',
+                    borderWidth: 1,
+                    textStyle: {
+                        color: '#2c3e50'
+                    },
+                    axisPointer: {
+                        type: 'shadow',
+                        shadowStyle: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    formatter: function(params) {
+                        // 展示格式化后的时间点字符串（如 6月25日 18:00:00）
+                        let rawTime = timePoints[params[0].dataIndex];
+                        let displayTime = rawTime;
+                        let dateObj = null;
+                        // 判断是否为数字（Excel序列号）
+                        if (!isNaN(Number(rawTime)) && rawTime !== '' && rawTime !== null && /^\d+(\.\d+)?$/.test(rawTime)) {
+                            // Excel序列号转日期，精确到秒
+                            const excelEpoch = new Date(Date.UTC(1899, 11, 30)); // UTC，避免时区偏移
+                            const days = Math.floor(Number(rawTime));
+                            const msPerDay = 24 * 60 * 60 * 1000;
+                            let ms = days * msPerDay;
+                            // 小数部分转为当天的时间
+                            const fraction = Number(rawTime) - days;
+                            ms += Math.round(fraction * msPerDay);
+                            dateObj = new Date(excelEpoch.getTime() + ms);
+                        } else if (typeof rawTime === 'string') {
+                            // 尝试解析常见日期字符串
+                            // 支持"2024/6/25 18:00"或"2024-06-25 18:00:00"
+                            let replaced = rawTime.replace(/-/g, '/');
+                            dateObj = new Date(replaced);
+                        }
+                        if (dateObj && !isNaN(dateObj.getTime())) {
+                            // 格式化为"6月25日 18:00:00"
+                            let M = dateObj.getMonth() + 1;
+                            let D = dateObj.getDate();
+                            let h = dateObj.getHours().toString().padStart(2, '0');
+                            let m = dateObj.getMinutes().toString().padStart(2, '0');
+                            let s = dateObj.getSeconds().toString().padStart(2, '0');
+                            displayTime = `${M}月${D}日 ${h}:${m}:${s}`;
+                        }
+                        let result = `<div style=\"font-weight:bold;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e1e4e8;font-size:14px;color:#2c3e50;\">${displayTime}</div>`;
+                        // 请求量
+                        const totalParam = params.find(p => p.seriesName === '请求量');
+                        if (totalParam) {
+                            result += `<div style=\"margin:4px 0;\">${totalParam.marker} <span style=\"font-weight:500;display:inline-block;width:60px;\">${totalParam.seriesName}:</span> <span style=\"font-weight:bold;color:#5470C6;\">${totalParam.value.toLocaleString()}</span></div>`;
+                        }
+                        // 拦截量
+                        const killParam = params.find(p => p.seriesName === '拦截量');
+                        if (killParam) {
+                            result += `<div style=\"margin:4px 0;\">${killParam.marker} <span style=\"font-weight:500;display:inline-block;width:60px;\">${killParam.seriesName}:</span> <span style=\"font-weight:bold;color:#91CC75;\">${killParam.value.toLocaleString()}</span></div>`;
+                        }
+                        // 拦截率
+                        const blockRateParam = params.find(p => p.seriesName === '拦截率');
+                        if (blockRateParam) {
+                            result += `<div style=\"margin:4px 0;\">${blockRateParam.marker} <span style=\"font-weight:500;display:inline-block;width:60px;\">${blockRateParam.seriesName}:</span> <span style=\"font-weight:bold;color:#EE6666;\">${blockRateParam.value}%</span></div>`;
+                        }
+                        // 如果有sourceType信息，也显示在tooltip中
+                        if (params[0].data && params[0].data.sourceType) {
+                            result += `<div style=\"margin-top:6px;padding-top:6px;border-top:1px solid #e1e4e8;font-size:12px;color:#666;\">场景: ${params[0].data.sourceType}</div>`;
+                        }
+                        return result;
+                    }
+                },
+                legend: {
+                    data: ['请求量', '拦截量', '拦截率'],
+                    bottom: 10,
+                    icon: 'roundRect',
+                    itemWidth: 12,
+                    itemHeight: 12,
+                    textStyle: {
+                        color: '#2c3e50'
+                    },
+                    itemGap: 20
+                },
+                grid: {
+                    left: '3%',
+                    right: '5%',
+                    bottom: '15%',
+                    top: '10%',
+                    containLabel: true,
+                    width: 'auto' // 自动调整宽度以适应容器
+                },
+                xAxis: {
+                    type: 'category',
+                    data: formattedTimePoints,
+                    axisLine: {
+                        lineStyle: {
+                            color: '#cfd7df'
+                        }
+                    },
+                    axisTick: {
+                        alignWithLabel: true,
+                        lineStyle: {
+                            color: '#cfd7df'
+                        }
+                    },
+                    axisLabel: {
+                        rotate: 45,
+                        margin: 15,
+                        color: '#5a6268',
+                        fontSize: 12,
+                        interval: 'auto', // 自动计算间隔，避免标签重叠
+                        hideOverlap: true, // 隐藏重叠的标签
+                        formatter: function(value) {
+                            // 检查是否为小时格式（包含空格，如 "2025/6/9 17:00"）
+                            if (typeof value === 'string' && value.includes(' ')) {
+                                // 分离日期和时间部分
+                                const [datePart, timePart] = value.split(' ');
+                                // 尝试解析日期部分
+                                try {
+                                    const date = new Date(datePart);
+                                    if (!isNaN(date.getTime())) {
+                                        // 返回格式化的日期和时间
+                                        return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${timePart}`;
+                                    }
+                                } catch (e) {}
+                                return value;
+                            }
+                            
+                            // 处理仅有日期的情况
+                            try {
+                                const date = new Date(value);
+                                if (!isNaN(date.getTime())) {
+                                    return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+                                }
+                            } catch (e) {}
+                            return value;
+                        }
+                    },
+                    splitLine: {
+                        show: false
+                    }
+                },
+                yAxis: [
+                    {
+                        type: 'value',
+                        name: '数量',
+                        position: 'left',
+                        nameTextStyle: {
+                            color: '#5470C6',
+                            fontSize: 13,
+                            padding: [0, 0, 0, -30]
+                        },
+                        axisLine: {
+                            show: true,
+                            lineStyle: {
+                                color: '#5470C6'
+                            }
+                        },
+                        axisLabel: {
+                            formatter: '{value}',
+                            color: '#5a6268'
+                        },
+                        splitLine: {
+                            lineStyle: {
+                                color: '#eaecef',
+                                type: 'dashed'
+                            }
+                        }
+                    },
+                    {
+                        type: 'value',
+                        name: '拦截率(%)',
+                        position: 'right',
+                        nameTextStyle: {
+                            color: '#E67E22',
+                            fontSize: 13,
+                            padding: [0, -30, 0, 0]
+                        },
+                        min: 0,
+                        max: function(value) {
+                            // 根据实际数据动态设置最大值
+                            // 找出最大拦截率值，并向上取整到最接近的整数
+                            const maxRate = Math.max(...blockRateData.map(item => parseFloat(item.value || item)));
+                            return Math.ceil(maxRate) + 0.5;
+                        },
+                        interval: function(value) {
+                            // 根据最大值动态设置间隔
+                            return value.max / 5;
+                        },
+                        axisLine: {
+                            show: true,
+                            lineStyle: {
+                                color: '#E67E22'
+                            }
+                        },
+                        axisLabel: {
+                            formatter: '{value}%',
+                            color: '#5a6268'
+                        },
+                        splitLine: {
+                            show: false
+                        }
+                    }
+                ],
+                series: [
+                    {
+                        name: '请求量',
+                        type: 'bar',
+                        data: totalData,
+                        yAxisIndex: 0,
+                        barMaxWidth: 40,
+                        itemStyle: {
+                            color: '#5470C6',
+                            borderRadius: [4, 4, 0, 0]
+                        },
+                        emphasis: {
+                            focus: 'series'
+                        },
+                        z: 10
+                    },
+                    {
+                        name: '拦截量',
+                        type: 'bar',
+                        data: killData,
+                        yAxisIndex: 0,
+                        barMaxWidth: 40,
+                        itemStyle: {
+                            color: '#EE6666',
+                            borderRadius: [4, 4, 0, 0]
+                        },
+                        emphasis: {
+                            focus: 'series'
+                        },
+                        z: 10
+                    },
+                    {
+                        name: '拦截率',
+                        type: 'line',
+                        data: blockRateData,
+                        yAxisIndex: 1,
+                        symbol: 'circle',
+                        symbolSize: 8,
+                        itemStyle: {
+                            color: '#E67E22',
+                            borderWidth: 2
+                        },
+                        lineStyle: {
+                            width: 3,
+                            shadowColor: 'rgba(230, 126, 34, 0.3)',
+                            shadowBlur: 10,
+                            type: 'solid'
+                        },
+                        smooth: true,
+                        emphasis: {
+                            focus: 'series',
+                            itemStyle: {
+                                borderWidth: 3
+                            }
+                        },
+                        z: 11
+                    }
+                ]
+            };
+            
+            myChart.hideLoading();
+            myChart.setOption(option);
+            
+            // 响应窗口大小变化
+            window.addEventListener('resize', function() {
+                myChart.resize();
+            });
+        }
+        
+        // 下载图表为图片
+        document.getElementById('download-btn').addEventListener('click', function() {
+            if (!myChart) {
+                alert('请先生成图表！');
+                return;
+            }
+            
+            // 添加水印和时间戳
+            const timestamp = new Date().toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            const url = myChart.getDataURL({
+                type: 'png',
+                pixelRatio: 2,
+                backgroundColor: '#fff',
+                excludeComponents: ['toolbox']
+            });
+            
+            // 检查数据是否包含小时信息
+            const hasHourData = rawData.some(item => item.hour !== undefined);
+            const filePrefix = hasHourData ? '小时级数据折线图_' : '数据折线图_';
+            
+            const link = document.createElement('a');
+            link.download = filePrefix + new Date().toISOString().slice(0, 10) + '.png';
+            link.href = url;
+            link.click();
+            
+            // 显示下载成功提示
+            const successMsg = document.createElement('div');
+            successMsg.style.position = 'fixed';
+            successMsg.style.bottom = '20px';
+            successMsg.style.left = '50%';
+            successMsg.style.transform = 'translateX(-50%)';
+            successMsg.style.backgroundColor = 'rgba(39, 174, 96, 0.9)';
+            successMsg.style.color = 'white';
+            successMsg.style.padding = '10px 20px';
+            successMsg.style.borderRadius = '4px';
+            successMsg.style.zIndex = '9999';
+            successMsg.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.2)';
+            successMsg.textContent = '图片已成功下载！';
+            
+            document.body.appendChild(successMsg);
+            
+            setTimeout(function() {
+                successMsg.style.opacity = '0';
+                successMsg.style.transition = 'opacity 0.5s ease';
+                setTimeout(function() {
+                    document.body.removeChild(successMsg);
+                }, 500);
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
